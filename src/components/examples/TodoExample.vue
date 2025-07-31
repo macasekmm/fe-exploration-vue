@@ -83,53 +83,41 @@
   </BaseCard>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, computed, watch } from 'vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseInput from '@/components/common/BaseInput.vue'
 
-// Types
-interface Todo {
-  id: number
-  text: string
-  completed: boolean
-}
-
-interface FilterOption {
-  value: string
-  label: string
-}
-
 // Reactive state
-const todos = ref<Todo[]>([
+const todos = ref([
   { id: 1, text: 'Learn Vue.js fundamentals', completed: true },
   { id: 2, text: 'Build a todo app', completed: false },
   { id: 3, text: 'Compare Vue with React', completed: false },
 ])
 
-const newTodoText = ref<string>('')
-const currentFilter = ref<string>('all')
-const todoError = ref<string>('')
-const nextId = ref<number>(4)
+const newTodoText = ref('')
+const currentFilter = ref('all')
+const todoError = ref('')
+const nextId = ref(4)
 
 // Filter options
-const filterOptions: FilterOption[] = [
+const filterOptions = [
   { value: 'all', label: 'All' },
   { value: 'active', label: 'Active' },
   { value: 'completed', label: 'Completed' },
 ]
 
 // Computed properties
-const completedCount = computed((): number => todos.value.filter((todo) => todo.completed).length)
+const completedCount = computed(() => todos.value.filter((todo) => todo.completed).length)
 
-const activeCount = computed((): number => todos.value.filter((todo) => !todo.completed).length)
+const activeCount = computed(() => todos.value.filter((todo) => !todo.completed).length)
 
 const allCompleted = computed(
-  (): boolean => todos.value.length > 0 && todos.value.every((todo) => todo.completed),
+  () => todos.value.length > 0 && todos.value.every((todo) => todo.completed),
 )
 
-const filteredTodos = computed((): Todo[] => {
+const filteredTodos = computed(() => {
   switch (currentFilter.value) {
     case 'active':
       return todos.value.filter((todo) => !todo.completed)
@@ -141,7 +129,7 @@ const filteredTodos = computed((): Todo[] => {
 })
 
 // Methods
-const addTodo = (): void => {
+const addTodo = () => {
   if (validateTodoInput()) {
     todos.value.push({
       id: nextId.value++,
@@ -153,32 +141,32 @@ const addTodo = (): void => {
   }
 }
 
-const toggleTodo = (id: number): void => {
+const toggleTodo = (id) => {
   const todo = todos.value.find((t) => t.id === id)
   if (todo) {
     todo.completed = !todo.completed
   }
 }
 
-const removeTodo = (id: number): void => {
+const removeTodo = (id) => {
   const index = todos.value.findIndex((t) => t.id === id)
   if (index > -1) {
     todos.value.splice(index, 1)
   }
 }
 
-const toggleAll = (): void => {
+const toggleAll = () => {
   const shouldComplete = !allCompleted.value
   todos.value.forEach((todo) => {
     todo.completed = shouldComplete
   })
 }
 
-const clearCompleted = (): void => {
+const clearCompleted = () => {
   todos.value = todos.value.filter((todo) => !todo.completed)
 }
 
-const validateTodoInput = (): boolean => {
+const validateTodoInput = () => {
   const text = newTodoText.value.trim()
   if (!text) {
     todoError.value = 'Todo text cannot be empty'
@@ -192,7 +180,7 @@ const validateTodoInput = (): boolean => {
   return true
 }
 
-const getEmptyMessage = (): string => {
+const getEmptyMessage = () => {
   switch (currentFilter.value) {
     case 'active':
       return 'No active todos! 🎉'
@@ -204,7 +192,7 @@ const getEmptyMessage = (): string => {
 }
 
 // Watchers - Vue's way to perform side effects on reactive data changes
-watch(newTodoText, (newValue: string) => {
+watch(newTodoText, (newValue) => {
   if (newValue && todoError.value) {
     validateTodoInput()
   }
@@ -212,7 +200,7 @@ watch(newTodoText, (newValue: string) => {
 
 watch(
   todos,
-  (newTodos: Todo[]) => {
+  (newTodos) => {
     console.log(`Todo count changed to: ${newTodos.length}`)
   },
   { deep: true },
@@ -303,8 +291,3 @@ watch(
   border-top: 1px solid #e2e8f0;
 }
 </style>
-```# Vue.js Framework Showcase - Complete Implementation ## Project Setup Instructions ###
-Prerequisites - Node.js 16+ installed - npm or yarn package manager ### 1. Create Vue Project
-```bash # Using Vue CLI npm install -g @vue/cli vue create vue-showcase # Select Vue 3, TypeScript
-(optional), Router, Vuex/Pinia # OR using Vite (recommended for Vue 3) npm create vue@latest
-vue-showcase cd vue-showcase npm install npm run dev
