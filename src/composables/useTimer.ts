@@ -1,57 +1,103 @@
-import { ref, onUnmounted, Ref } from 'vue'
+import { ref, computed, onUnmounted, type Ref, type ComputedRef } from 'vue'
 
-interface UseTimerReturn {
+export interface UseTimerOptions {
+  autoStart?: boolean
+  interval?: number
+  countdown?: boolean
+  initialTime?: number
+}
+
+export interface UseTimerReturn {
   seconds: Ref<number>
   isRunning: Ref<boolean>
   start: () => void
   pause: () => void
   reset: () => void
-  formatTime: (totalSeconds: number) => string
+  toggle: () => void
+  formattedTime: ComputedRef<string>
+  minutes: ComputedRef<number>
+  hours: ComputedRef<number>
 }
 
-// Composables are Vue's equivalent to React custom hooks
-// They encapsulate reactive logic and can be reused across components
-export function useTimer(): UseTimerReturn {
-  const seconds = ref<number>(0)
-  const isRunning = ref<boolean>(false)
-  let intervalId: NodeJS.Timeout | null = null
+export function useTimer(options: UseTimerOptions = {}): UseTimerReturn {
+  const { autoStart = false, interval = 1000, countdown = false, initialTime = 0 } = options
 
+  // State
+  const seconds = ref<number>(initialTime)
+  const isRunning = ref<boolean>(false)
+  let intervalId: number | null = null
+
+  // Computed properties
+  const formattedTime = computed<string>(() => {
+    const totalSeconds = Math.abs(seconds.value)
+    const hrs = Math.floor(totalSeconds / 3600)
+    const mins = Math.floor((totalSeconds % 3600) / 60)
+    const secs = totalSeconds % 60
+
+    const sign = seconds.value < 0 ? '-' : ''
+
+    if (hrs > 0) {
+      return `${sign}${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+    }
+    return `${sign}${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  })
+
+  const minutes = computed<number>(() => Math.floor(seconds.value / 60))
+  const hours = computed<number>(() => Math.floor(seconds.value / 3600))
+
+  // Timer logic
+  const tick = (): void => {
+    if (countdown) {
+      seconds.value--
+      if (seconds.value <= 0) {
+        pause()
+        seconds.value = 0
+      }
+    } else {
+      seconds.value++
+    }
+  }
+
+  // Actions
   const start = (): void => {
     if (!isRunning.value) {
       isRunning.value = true
-      intervalId = setInterval(() => {
-        seconds.value++
-      }, 1000)
+      intervalId = window.setInterval(tick, interval)
     }
   }
 
   const pause = (): void => {
-    if (isRunning.value) {
+    if (isRunning.value && intervalId !== null) {
       isRunning.value = false
-      if (intervalId) {
-        clearInterval(intervalId)
-        intervalId = null
-      }
+      clearInterval(intervalId)
+      intervalId = null
     }
   }
 
   const reset = (): void => {
     pause()
-    seconds.value = 0
+    seconds.value = initialTime
   }
 
-  const formatTime = (totalSeconds: number): string => {
-    const mins = Math.floor(totalSeconds / 60)
-    const secs = totalSeconds % 60
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  const toggle = (): void => {
+    if (isRunning.value) {
+      pause()
+    } else {
+      start()
+    }
   }
 
-  // Cleanup on unmount - similar to useEffect cleanup in React
+  // Cleanup on unmount
   onUnmounted(() => {
-    if (intervalId) {
+    if (intervalId !== null) {
       clearInterval(intervalId)
     }
   })
+
+  // Auto start if requested
+  if (autoStart) {
+    start()
+  }
 
   return {
     seconds,
@@ -59,6 +105,9 @@ export function useTimer(): UseTimerReturn {
     start,
     pause,
     reset,
-    formatTime,
+    toggle,
+    formattedTime,
+    minutes,
+    hours,
   }
 }

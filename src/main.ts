@@ -1,14 +1,14 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import router from './router'
+import './style.css'
 import App from './App.vue'
-import './assets/main.css'
 
+// Create Vue app instance
 const app = createApp(App)
 
-// Vue 3 uses createApp() instead of new Vue()
-// Plugins are installed using app.use()
-app.use(createPinia()) // State management
-app.use(router) // Routing
+// Add Pinia for state management
+const pinia = createPinia()
+app.use(pinia)
 
+// Mount app to DOM
 app.mount('#app')
